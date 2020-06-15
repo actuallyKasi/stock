@@ -91,7 +91,7 @@ func main() {
 	fmt.Printf(`Stock price : %.2f
 Number of stocks: %.0f
 Usd to INR: %.2f
-Total value: %.0f
+Total value INR: %.0f
 `, quote.C, *units, usd_to_inr, current_value)
 }
 
