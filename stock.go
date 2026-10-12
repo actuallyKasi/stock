@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"math"
 	"net/http"
@@ -38,7 +38,7 @@ func main() {
 		log.Printf("Error gettting response: %s", err)
 		os.Exit(1)
 	}
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("Error reading response body: %s", err)
 		os.Exit(1)
@@ -74,7 +74,7 @@ func main() {
 		log.Printf("Error gettting response: %s", err)
 		os.Exit(1)
 	}
-	body, err = ioutil.ReadAll(resp.Body)
+	body, err = io.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("Error reading response body: %s", err)
 		os.Exit(1)
