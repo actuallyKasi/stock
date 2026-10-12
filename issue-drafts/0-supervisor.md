@@ -5,12 +5,12 @@ The children run in order. Each one builds on the previous one's merged code.
 ```changathi-supervisor
 version: 1
 children:
-  - issue: A
+  - issue: 1
     depends_on: []
-  - issue: B
-    depends_on: [A]
-  - issue: C
-    depends_on: [B]
-  - issue: D
-    depends_on: [C]
+  - issue: 2
+    depends_on: [1]
+  - issue: 3
+    depends_on: [2]
+  - issue: 4
+    depends_on: [3]
 ```
