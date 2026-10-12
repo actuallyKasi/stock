@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+const testKey = "secret-key"
+
 // newTestMassive starts a server with handler and returns a Massive provider
 // pointed at it.
 func newTestMassive(t *testing.T, handler http.HandlerFunc) *Massive {
@@ -17,6 +19,14 @@ func newTestMassive(t *testing.T, handler http.HandlerFunc) *Massive {
 	srv := httptest.NewServer(handler)
 	t.Cleanup(srv.Close)
 	return NewMassive(testKey, WithBaseURL(srv.URL), WithHTTPClient(srv.Client()))
+}
+
+// respond returns a handler that replies with status and body.
+func respond(status int, body string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(status)
+		w.Write([]byte(body))
+	}
 }
 
 // checkMassiveRequest asserts r is a prev-day bar request for path that

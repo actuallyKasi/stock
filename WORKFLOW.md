@@ -16,4 +16,4 @@ max_verify_rounds: 2
 ---
 Implement issue #{{.Issue.Number}}: {{.Issue.Title}}.
 Follow existing repository conventions. Keep the change scoped to this issue.
-Never call the real Finnhub or Massive APIs from tests; use net/http/httptest.
+Never call the real Massive API from tests; use net/http/httptest.

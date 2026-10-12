@@ -14,6 +14,9 @@ import (
 // MassiveBaseURL is the default Massive (formerly Polygon.io) API base URL.
 const MassiveBaseURL = "https://api.massive.com"
 
+// maxErrBody caps how much of an error response body is included in errors.
+const maxErrBody = 200
+
 // Massive is a Provider backed by the Massive API. It uses the previous-day
 // aggregate bar endpoints, which are available on the free Basic plans, so
 // prices and rates are end-of-day closes.
@@ -98,4 +101,12 @@ func (m *Massive) prevClose(ctx context.Context, ticker string) (float64, time.T
 	}
 	bar := aggs.Results[0]
 	return bar.C, time.UnixMilli(bar.Start).UTC(), nil
+}
+
+// truncate shortens s to at most n bytes, marking the cut with "...".
+func truncate(s string, n int) string {
+	if len(s) > n {
+		s = s[:n] + "..."
+	}
+	return strings.TrimSpace(s)
 }
