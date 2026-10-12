@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 const testKey = "secret-key"
@@ -38,19 +39,22 @@ func TestPriceSuccess(t *testing.T) {
 		w.Write([]byte(`{"c":123.45,"h":125,"l":120,"o":121,"pc":122,"t":1700000000}`))
 	})
 
-	got, err := f.Price(context.Background(), "NET")
+	got, asOf, err := f.Price(context.Background(), "NET")
 	if err != nil {
 		t.Fatalf("Price: %v", err)
 	}
 	if got != 123.45 {
 		t.Errorf("Price = %v, want 123.45", got)
 	}
+	if want := time.Unix(1700000000, 0); !asOf.Equal(want) {
+		t.Errorf("as of = %v, want %v", asOf, want)
+	}
 }
 
 func TestPriceNon200(t *testing.T) {
 	f := newTestFinnhub(t, respond(http.StatusTooManyRequests, `{"error":"API limit reached"}`))
 
-	_, err := f.Price(context.Background(), "NET")
+	_, _, err := f.Price(context.Background(), "NET")
 	if err == nil {
 		t.Fatal("Price: expected error, got nil")
 	}
@@ -65,7 +69,7 @@ func TestPriceNon200(t *testing.T) {
 func TestPriceMalformedJSON(t *testing.T) {
 	f := newTestFinnhub(t, respond(http.StatusOK, `{"c":`))
 
-	if _, err := f.Price(context.Background(), "NET"); err == nil {
+	if _, _, err := f.Price(context.Background(), "NET"); err == nil {
 		t.Fatal("Price: expected error, got nil")
 	}
 }
@@ -74,7 +78,7 @@ func TestPriceUnknownSymbol(t *testing.T) {
 	// Finnhub answers unknown symbols with 200 and a zeroed quote.
 	f := newTestFinnhub(t, respond(http.StatusOK, `{"c":0,"d":null,"dp":null,"h":0,"l":0,"o":0,"pc":0,"t":0}`))
 
-	_, err := f.Price(context.Background(), "NOPE")
+	_, _, err := f.Price(context.Background(), "NOPE")
 	if err == nil {
 		t.Fatal("Price: expected error, got nil")
 	}
@@ -91,7 +95,7 @@ func TestUSDToSuccess(t *testing.T) {
 		w.Write([]byte(`{"base":"EUR","quote":{"USD":1.25,"INR":100,"SGD":1.5}}`))
 	})
 
-	got, err := f.USDTo(context.Background(), "inr")
+	got, _, err := f.USDTo(context.Background(), "inr")
 	if err != nil {
 		t.Fatalf("USDTo: %v", err)
 	}
@@ -103,7 +107,7 @@ func TestUSDToSuccess(t *testing.T) {
 func TestUSDToNon200(t *testing.T) {
 	f := newTestFinnhub(t, respond(http.StatusForbidden, `{"error":"You don't have access to this resource."}`))
 
-	_, err := f.USDTo(context.Background(), "INR")
+	_, _, err := f.USDTo(context.Background(), "INR")
 	if err == nil {
 		t.Fatal("USDTo: expected error, got nil")
 	}
@@ -118,7 +122,7 @@ func TestUSDToNon200(t *testing.T) {
 func TestUSDToMalformedJSON(t *testing.T) {
 	f := newTestFinnhub(t, respond(http.StatusOK, `not json`))
 
-	if _, err := f.USDTo(context.Background(), "INR"); err == nil {
+	if _, _, err := f.USDTo(context.Background(), "INR"); err == nil {
 		t.Fatal("USDTo: expected error, got nil")
 	}
 }
@@ -126,7 +130,7 @@ func TestUSDToMalformedJSON(t *testing.T) {
 func TestUSDToMissingCurrency(t *testing.T) {
 	f := newTestFinnhub(t, respond(http.StatusOK, `{"base":"EUR","quote":{"USD":1.25}}`))
 
-	if _, err := f.USDTo(context.Background(), "INR"); err == nil {
+	if _, _, err := f.USDTo(context.Background(), "INR"); err == nil {
 		t.Fatal("USDTo: expected error, got nil")
 	}
 }
@@ -148,10 +152,10 @@ func TestAPIKeySentAsHeader(t *testing.T) {
 	})
 
 	ctx := context.Background()
-	if _, err := f.Price(ctx, "NET"); err != nil {
+	if _, _, err := f.Price(ctx, "NET"); err != nil {
 		t.Fatalf("Price: %v", err)
 	}
-	if _, err := f.USDTo(ctx, "INR"); err != nil {
+	if _, _, err := f.USDTo(ctx, "INR"); err != nil {
 		t.Fatalf("USDTo: %v", err)
 	}
 	if requests != 2 {
@@ -162,7 +166,7 @@ func TestAPIKeySentAsHeader(t *testing.T) {
 func TestErrorsDoNotContainAPIKey(t *testing.T) {
 	f := newTestFinnhub(t, respond(http.StatusInternalServerError, "boom"))
 
-	_, err := f.Price(context.Background(), "NET")
+	_, _, err := f.Price(context.Background(), "NET")
 	if err == nil {
 		t.Fatal("Price: expected error, got nil")
 	}
