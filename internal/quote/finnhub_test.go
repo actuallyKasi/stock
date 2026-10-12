@@ -2,6 +2,7 @@ package quote
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -56,6 +57,9 @@ func TestPriceNon200(t *testing.T) {
 	if !strings.Contains(err.Error(), "429") {
 		t.Errorf("error %q does not mention status 429", err)
 	}
+	if !errors.Is(err, ErrRateLimited) {
+		t.Errorf("error %q does not wrap ErrRateLimited", err)
+	}
 }
 
 func TestPriceMalformedJSON(t *testing.T) {
@@ -105,6 +109,9 @@ func TestUSDToNon200(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "403") {
 		t.Errorf("error %q does not mention status 403", err)
+	}
+	if errors.Is(err, ErrRateLimited) {
+		t.Errorf("error %q wraps ErrRateLimited for a 403", err)
 	}
 }
 

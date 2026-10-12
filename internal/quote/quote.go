@@ -3,6 +3,7 @@ package quote
 
 import (
 	"context"
+	"errors"
 	"math"
 	"net/http"
 	"time"
@@ -10,6 +11,10 @@ import (
 
 // DefaultTimeout is the timeout of the HTTP client used when none is supplied.
 const DefaultTimeout = 10 * time.Second
+
+// ErrRateLimited is wrapped by provider errors when the API rejects a request
+// for exceeding the plan's rate limit (HTTP 429).
+var ErrRateLimited = errors.New("rate limited")
 
 // Provider fetches stock prices and USD exchange rates.
 type Provider interface {

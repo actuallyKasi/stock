@@ -86,7 +86,11 @@ func (f *Finnhub) get(ctx context.Context, path string, query url.Values, v any)
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, maxErrBody+1))
-		return fmt.Errorf("unexpected status %s: %s", resp.Status, truncate(string(body), maxErrBody))
+		err := fmt.Errorf("unexpected status %s: %s", resp.Status, truncate(string(body), maxErrBody))
+		if resp.StatusCode == http.StatusTooManyRequests {
+			err = fmt.Errorf("%w: %w", ErrRateLimited, err)
+		}
+		return err
 	}
 	if err := json.NewDecoder(resp.Body).Decode(v); err != nil {
 		return fmt.Errorf("decoding response: %w", err)
