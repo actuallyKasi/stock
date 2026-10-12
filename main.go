@@ -44,12 +44,12 @@ func run(ctx context.Context, w io.Writer, p quote.Provider, o options) error {
 	price := o.price
 	if price == 0 {
 		var err error
-		if price, err = p.Price(ctx, o.symbol); err != nil {
+		if price, _, err = p.Price(ctx, o.symbol); err != nil {
 			return err
 		}
 	}
 
-	rate, err := p.USDTo(ctx, targetCurrency)
+	rate, _, err := p.USDTo(ctx, targetCurrency)
 	if err != nil {
 		return err
 	}

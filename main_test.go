@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 )
 
 type fakeProvider struct {
@@ -15,15 +16,15 @@ type fakeProvider struct {
 	usdToCalls    int
 }
 
-func (f *fakeProvider) Price(ctx context.Context, symbol string) (float64, error) {
+func (f *fakeProvider) Price(ctx context.Context, symbol string) (float64, time.Time, error) {
 	f.priceCalls++
-	return f.price, f.priceErr
+	return f.price, time.Time{}, f.priceErr
 }
 
-func (f *fakeProvider) USDTo(ctx context.Context, currency string) (float64, error) {
+func (f *fakeProvider) USDTo(ctx context.Context, currency string) (float64, time.Time, error) {
 	f.usdToCalls++
 	f.usdToCurrency = currency
-	return f.rate, nil
+	return f.rate, time.Time{}, nil
 }
 
 func TestRunUserSuppliedPrice(t *testing.T) {

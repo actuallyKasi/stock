@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 // FinnhubBaseURL is the default Finnhub API base URL.
@@ -41,30 +42,35 @@ type finnhubForex struct {
 	Quote map[string]float64 `json:"quote"`
 }
 
-// Price returns the current price of symbol.
-func (f *Finnhub) Price(ctx context.Context, symbol string) (float64, error) {
+// Price returns the current price of symbol and the time of that quote.
+func (f *Finnhub) Price(ctx context.Context, symbol string) (float64, time.Time, error) {
 	var q finnhubQuote
 	if err := f.get(ctx, "/quote", url.Values{"symbol": {symbol}}, &q); err != nil {
-		return 0, fmt.Errorf("finnhub quote for %s: %w", symbol, err)
+		return 0, time.Time{}, fmt.Errorf("finnhub quote for %s: %w", symbol, err)
 	}
 	if q.C == 0 {
-		return 0, fmt.Errorf("finnhub quote for %s: no price returned (unknown symbol?)", symbol)
+		return 0, time.Time{}, fmt.Errorf("finnhub quote for %s: no price returned (unknown symbol?)", symbol)
 	}
-	return q.C, nil
+	var asOf time.Time
+	if q.T != 0 {
+		asOf = time.Unix(q.T, 0).UTC()
+	}
+	return q.C, asOf, nil
 }
 
-// USDTo returns the USD to currency exchange rate.
-func (f *Finnhub) USDTo(ctx context.Context, currency string) (float64, error) {
+// USDTo returns the USD to currency exchange rate. Finnhub's forex rates
+// carry no timestamp, so the returned time is always zero.
+func (f *Finnhub) USDTo(ctx context.Context, currency string) (float64, time.Time, error) {
 	currency = strings.ToUpper(currency)
 	var fx finnhubForex
 	if err := f.get(ctx, "/forex/rates", nil, &fx); err != nil {
-		return 0, fmt.Errorf("finnhub forex rates: %w", err)
+		return 0, time.Time{}, fmt.Errorf("finnhub forex rates: %w", err)
 	}
 	usd, to := fx.Quote["USD"], fx.Quote[currency]
 	if usd == 0 || to == 0 {
-		return 0, fmt.Errorf("finnhub forex rates: no USD/%s rate returned", currency)
+		return 0, time.Time{}, fmt.Errorf("finnhub forex rates: no USD/%s rate returned", currency)
 	}
-	return to / usd, nil
+	return to / usd, time.Time{}, nil
 }
 
 func (f *Finnhub) get(ctx context.Context, path string, query url.Values, v any) error {

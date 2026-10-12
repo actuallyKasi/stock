@@ -16,12 +16,14 @@ const DefaultTimeout = 10 * time.Second
 // for exceeding the plan's rate limit (HTTP 429).
 var ErrRateLimited = errors.New("rate limited")
 
-// Provider fetches stock prices and USD exchange rates.
+// Provider fetches stock prices and USD exchange rates. Each method also
+// returns the time the value is as of, or the zero time if the provider does
+// not report one.
 type Provider interface {
 	// Price returns the latest price of symbol in USD.
-	Price(ctx context.Context, symbol string) (float64, error)
+	Price(ctx context.Context, symbol string) (float64, time.Time, error)
 	// USDTo returns how many units of currency one USD buys.
-	USDTo(ctx context.Context, currency string) (float64, error)
+	USDTo(ctx context.Context, currency string) (float64, time.Time, error)
 }
 
 // Value returns the value of units shares at price (USD), converted with rate
